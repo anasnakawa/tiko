@@ -25,7 +25,7 @@ function grunt( grunt ) {
 	require( 'load-grunt-tasks' )( grunt );
 
 	// tasks
-	grunt.registerTask();
+	grunt.registerTask( 'default', [ 'concat', 'uglify' ]);
 }
 
 
@@ -34,7 +34,24 @@ function grunt( grunt ) {
  */
 
 function concat() {
-
+	return {
+		tiko: {
+			src: [
+				'./lib/base/core.base.js',
+				'./lib/core/core.config.js',
+				'./lib/core/core.events.js',
+				'./lib/core/core.util.js',
+				'./lib/core/core.log.js',
+				'./lib/core/core.pubsub.js',
+				'./lib/core/core.storage.js',
+				'./lib/core/core.moduleBase.js',
+				'./lib/core/core.moduleFactory.js',
+				'./lib/core/core.moduleMain.js',
+				'./lib/core/core.pageBase.js'
+			],
+			dest: './dest/tiko.js'
+		}
+	};
 }
 
 
@@ -43,7 +60,16 @@ function concat() {
  */
 
 function uglify() {
-
+	return {
+		tiko: {
+			options: {
+	      preserveComments: 'some'
+	    },
+	    files: {
+	      './dest/tiko.min.js': [ './dest/tiko.js' ]
+	    }
+		}
+	}
 }
 
 
