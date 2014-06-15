@@ -37,7 +37,9 @@ function concat() {
 	return {
 		tiko: {
 			src: [
-				'./lib/base/core.base.js',
+				// base
+				'./lib/base/base.main.js',
+				// core
 				'./lib/core/core.config.js',
 				'./lib/core/core.events.js',
 				'./lib/core/core.util.js',
@@ -47,7 +49,9 @@ function concat() {
 				'./lib/core/core.moduleBase.js',
 				'./lib/core/core.moduleFactory.js',
 				'./lib/core/core.moduleMain.js',
-				'./lib/core/core.pageBase.js'
+				'./lib/core/core.pageBase.js',
+				// sandbox
+				'./lib/sandbox/sandbox.js'
 			],
 			dest: './dest/tiko.js'
 		}
@@ -78,5 +82,10 @@ function uglify() {
  */
 
 function watch() {
-
+	return {
+		tiko: {
+			files: 'lib/**/*.js',
+			tasks: [ 'concat' ]
+		}
+	}
 }

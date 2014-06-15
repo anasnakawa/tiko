@@ -1,14 +1,25 @@
 /*!
+ * base.main
+ */
+
+(function( tiko, $, ko, underscore ) { 'use strict';
+
+  // encapsulating base libraries
+  // for easier access
+  tiko.$ = $;
+  tiko.ko = ko;
+  tiko._ = underscore;
+
+})( this.tiko = this.tiko || {}, jQuery, ko, _ );
+/*!
  * core.config
  */
 
 (function( core ) { 'use strict';
 
-  core.config = {
-    
-  }
+  core.config = {};
 
-})( this.tiko = this.tiko || { core: {} } );
+})( this.tiko.core = this.tiko.core || {} );
 /*!
  * core.events
  */
@@ -295,13 +306,14 @@
    */
 
   var $ = core.$;
+  var util = core.util;
 
 
   /**
    * expose `ModuleBase`
    */
 
-  core.modules.moduleBase = ModuleBase;
+  core.moduleBase = ModuleBase;
 
 
   /**
@@ -323,7 +335,9 @@
    * `create` observables and model method 
    */
 
-  ModuleBase.prototype.create = function() {};
+  ModuleBase.prototype.create = function() {
+    util.is.fn( this.model ) && this.model.call( this );
+  };
   
 
   /**
@@ -360,12 +374,19 @@
 
 (function( core ) { 'use strict';
 
+  var ko = core.ko;
   var modules = {}
-  , util = core.util;
+  var util = core.util;
 
-  function registerModule( moduleName, impl ) {
+  function registerModule( moduleName, parent, impl ) {
     if( moduleName in modules ) {
       core.warn( 'attempt to register an already registered module: {moduleName}' );
+    }
+
+    // swap arguments
+    if( arguments.length == 2 ) {
+      impl = parent;
+      parent = null;
     }
 
     if( !( 'create' in impl ) ) {
@@ -375,7 +396,7 @@
     // module instance constructor
     modules[ moduleName ] = function( element, options ) {
       // inheritance setup
-      modules.moduleBase.prototype.constructor.apply( this, arguments );
+      core.moduleBase.prototype.constructor.apply( this, arguments );
       util.each( impl, function( object, key ) {
         if( !!key.match(/^create$|^init$/) ) return;
         this[ key ] = object;
@@ -384,21 +405,12 @@
       this.moduleName = moduleName;
       this.element = element;
       util.extend( this.options, options );
-
-      this.create();
-      this.init();
     }
 
     modules[ moduleName ].prototype.create = function() {
-      modules.moduleBase.prototype.create.apply( this, arguments );
+      core.moduleBase.prototype.create.apply( this, arguments );
       impl.create.apply( this, arguments );
     }
-
-    // modules[ moduleName ].prototype.init = function() {
-    //   modules.moduleBase.prototype.init.apply( this, arguments );
-    //   // init method is optional
-    //   util.is.fn( impl.init ) && impl.init.apply( this, arguments );
-    // }
   }
 
   core.modules = modules;
@@ -412,9 +424,10 @@
 (function( core ) { 'use strict';
 
   var util = core.util;
-  var $ = core.$;
 
   function startModule( moduleName, element, options ) {
+
+    options = options || {};
 
     if( util.is.string( element ) ) {
       element = $( element ).get( 0 );
@@ -425,8 +438,8 @@
       return;
     }
 
-    var instance;
-    var moduleId = util.id.next( moduleName + '_' );
+    var instance
+    , moduleId = util.id.next( moduleName + '_' );
 
     options.$module = {
       id: moduleId
@@ -438,9 +451,9 @@
       ko.$root = ko.$root || {};
       ko.$root[ moduleId ] = instance;
       $( element ).attr( 'data-bind', 'with: $root.{moduleId}'.replace( /{moduleId}/, moduleId ) );
+      instance.create();
       ko.applyBindings( ko.$root, element.get ? element.get( 0 ) : element );
-      instance.render();
-      instance.show();
+      util.is.fn( instance.render ) && instance.render();
     } catch( e ) {
       core.error( e );
     }
@@ -459,3 +472,34 @@
 
 
 })( this.tiko.core );
+/*!
+ * tiko sandbox
+ */
+
+(function( tiko ) { 'use strict';
+
+  // util
+  tiko.util = tiko.core.util;
+
+  // module system
+  tiko.registerModule = tiko.core.registerModule;
+  tiko.module = tiko.core.registerModule; // alias
+
+  tiko.modules = tiko.core.modules;
+  tiko.startModule = tiko.core.startModule;
+  tiko.start = tiko.core.startModule;
+
+  // config
+  tiko.config = tiko.core.config;
+
+  // communication
+  tiko.PubSub = tiko.core.PubSub;
+  tiko.pubsub = tiko.core.pubsub;
+
+  // logging
+  tiko.log = tiko.core.log;
+  tiko.error = tiko.core.error;
+  tiko.info = tiko.core.info;
+  tiko.warn = tiko.core.warn;
+
+})( this.tiko );
